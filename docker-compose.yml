@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  elasticsearch:
+    container_name: music-survey-elastic
+    image: 'elasticsearch:8.7.0'
+    volumes:
+      - elastic:/data/db
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+  postgres:
+    container_name: music-survey-postgres
+    image: 'postgres:alpine3.18'
+    volumes:
+      - postgres:/data/db
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+  music-survey-backend:
+    container_name: music-survey-backend
+    build: ./music-survey
+    ports:
+      - 8070:8070
+    depends_on:
+      - postgres
+  music-survey-ingest:
+    container_name: music-survey-ingest
+    build: ./music-survey-ingest
+    ports:
+      - 8090:8090
+    depends_on:
+      - elasticsearch
+      - music-survey-backend
+  music-survey-frontend:
+    container_name: music-survey-frontend
+    build: ./music-survey-frontend
+    ports:
+      - 80:80
+  jira:
+    container_name: music-survey-jira
+    image: 'atlassian/jira-software:latest'
+    volumes:
+      - jiraVolume:/var/atlassian/application-data/jira
+    ports:
+      - 8000:8080
+  confluence:
+    container_name: music-survey-confluence
+    image: 'atlassian/confluence:latest'
+    volumes:
+      - confluenceVolume:/var/atlassian/application-data/confluence
+    ports:
+      - 8010:8090
+      - 8011:8091
+volumes:
+  postgres:
+  elastic:
+  jiraVolume:
+  confluenceVolume:
